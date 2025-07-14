@@ -230,7 +230,7 @@ export default function AddTransactionScreen() {
                 style={[styles.addCategoryButton, { marginLeft: 10, borderColor: 'red' }]}
                 onPress={deleteSelectedCategory}
               >
-                <Text style={[styles.addCategoryText, { color: 'red' }]}>🗑 刪除選中</Text>
+                <Text style={[styles.addCategoryText, { color: 'red' }]}>🗑 刪除</Text>
               </TouchableOpacity>
             </View>
 
