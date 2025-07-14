@@ -164,9 +164,15 @@ export default function AddTransactionScreen() {
       Alert.alert('至少需要一個分類');
       return;
     }
+
     setter(updatedList);
     setCategory(updatedList[0]);
-    saveCategories();
+
+    if (type === '支出') {
+      AsyncStorage.setItem('expenseCategories', JSON.stringify(updatedList));
+    } else {
+      AsyncStorage.setItem('incomeCategories', JSON.stringify(updatedList));
+    }
   };
 
   const categories = type === '支出' ? expenseCategories : incomeCategories;
@@ -190,15 +196,13 @@ export default function AddTransactionScreen() {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.inputRow}>
-            <TextInput
-              style={styles.input}
-              placeholder="金額"
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="numeric"
-            />
-          </View>
+          <TextInput
+            style={styles.input}
+            placeholder="金額"
+            value={amount}
+            onChangeText={setAmount}
+            keyboardType="numeric"
+          />
 
           <TextInput
             style={styles.input}
@@ -221,7 +225,6 @@ export default function AddTransactionScreen() {
               ))}
             </ScrollView>
 
-            {/* 新增分類 + 刪除選中 */}
             <View style={{ flexDirection: 'row', marginTop: 10 }}>
               <TouchableOpacity style={styles.addCategoryButton} onPress={() => setShowAddCategory(true)}>
                 <Text style={styles.addCategoryText}>＋新增分類</Text>
@@ -275,11 +278,17 @@ export default function AddTransactionScreen() {
           </View>
 
           {transactions.map(item => (
-            <View key={item.id} style={styles.item}>
-              <Text>{item.date} | {item.type} | ${item.amount} | {item.category} | {item.note}</Text>
-              <TouchableOpacity onPress={() => deleteTransaction(item.id)}>
-                <Text style={{ color: 'red' }}>刪除</Text>
-              </TouchableOpacity>
+            <View key={item.id} style={styles.transactionCard}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={styles.transactionAmount}>
+                  {item.type === '支出' ? '－' : '＋'} ${item.amount}
+                </Text>
+                <TouchableOpacity onPress={() => deleteTransaction(item.id)}>
+                  <Text style={styles.transactionDelete}>🗑</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.transactionDetail}>{item.date} ｜ {item.category}</Text>
+              {item.note ? <Text style={styles.transactionNote}>備註：{item.note}</Text> : null}
             </View>
           ))}
         </ScrollView>
@@ -330,13 +339,35 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   subtitle: { fontSize: 20, marginBottom: 10 },
-  item: {
-    backgroundColor: '#f2f2f2',
-    padding: 10,
-    borderRadius: 8,
+  transactionCard: {
+    backgroundColor: '#ffffff',
+    padding: 15,
+    borderRadius: 10,
     marginBottom: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  transactionAmount: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2f95dc',
+  },
+  transactionDetail: {
+    fontSize: 14,
+    color: '#555',
+    marginTop: 4,
+  },
+  transactionNote: {
+    fontSize: 13,
+    color: '#888',
+    marginTop: 2,
+  },
+  transactionDelete: {
+    color: 'red',
+    fontSize: 16,
   },
   listHeader: {
     flexDirection: 'row',
