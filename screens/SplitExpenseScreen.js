@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   Button,
-  FlatList,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -26,9 +25,9 @@ export default function SplitExpenseScreen() {
   useEffect(() => {
     const loadMembers = async () => {
       try {
-        const storedMembers = await AsyncStorage.getItem(STORAGE_KEY);
-        if (storedMembers) {
-          setMembers(JSON.parse(storedMembers));
+        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          setMembers(JSON.parse(stored));
         } else {
           setMembers([
             { id: '1', name: '小明', selected: true },
@@ -78,14 +77,14 @@ export default function SplitExpenseScreen() {
     const total = parseFloat(totalAmount);
     if (isNaN(total)) return;
 
-    const selectedMembers = members.filter(m => m.selected);
-    if (selectedMembers.length === 0) {
+    const selected = members.filter(m => m.selected);
+    if (selected.length === 0) {
       alert('請至少選擇一位成員');
       return;
     }
 
-    const share = (total / selectedMembers.length).toFixed(0);
-    const resultList = selectedMembers.map(m => ({
+    const share = (total / selected.length).toFixed(0);
+    const resultList = selected.map(m => ({
       id: m.id,
       text: `${m.name} 應付 ${share} 元`
     }));
@@ -114,35 +113,33 @@ export default function SplitExpenseScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
+      style={{ flex: 1 }}
     >
       <TouchableOpacity
         activeOpacity={1}
-        style={{ flex: 1 }}
         onPress={() => Keyboard.dismiss()}
+        style={{ flex: 1 }}
       >
-        <Text style={styles.title}>分帳計算器</Text>
+        <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.title}>分帳計算器</Text>
 
-        <View style={styles.row}>
-          <TextInput
-            style={styles.input}
-            placeholder="新增成員名稱"
-            value={newMemberName}
-            onChangeText={setNewMemberName}
-            onSubmitEditing={addMember}
-            returnKeyType="done"
-          />
-          <Button title="新增" onPress={addMember} />
-        </View>
+          {/* 新增成員 */}
+          <View style={styles.row}>
+            <TextInput
+              style={styles.input}
+              placeholder="新增成員名稱"
+              value={newMemberName}
+              onChangeText={setNewMemberName}
+              onSubmitEditing={addMember}
+              returnKeyType="done"
+            />
+            <Button title="新增" onPress={addMember} />
+          </View>
 
-        <Text style={styles.sectionTitle}>成員（點圈選擇）</Text>
-        {members.length === 0 && <Text style={styles.empty}>尚無成員</Text>}
-        <FlatList
-          data={members}
-          keyExtractor={item => item.id}
-          style={{ maxHeight: 130 }}
-          renderItem={({ item }) => (
-            <View style={styles.memberRow}>
+          <Text style={styles.sectionTitle}>成員（點圈圈選）</Text>
+          {members.length === 0 && <Text style={styles.empty}>尚無成員</Text>}
+          {members.map(item => (
+            <View key={item.id} style={styles.memberRow}>
               <TouchableOpacity onPress={() => toggleSelectMember(item.id)}>
                 <Text style={[
                   styles.circle,
@@ -154,30 +151,31 @@ export default function SplitExpenseScreen() {
                 <Text style={styles.remove}>刪除</Text>
               </TouchableOpacity>
             </View>
-          )}
-        />
+          ))}
 
-        <Text style={styles.sectionTitle}>總金額</Text>
-        <TextInput
-          style={styles.amountInput}
-          keyboardType="numeric"
-          placeholder="輸入金額"
-          value={totalAmount}
-          onChangeText={setTotalAmount}
-        />
+          {/* 輸入金額 */}
+          <Text style={styles.sectionTitle}>總金額</Text>
+          <TextInput
+            style={styles.amountInput}
+            keyboardType="numeric"
+            placeholder="輸入金額"
+            value={totalAmount}
+            onChangeText={setTotalAmount}
+          />
 
-        <View style={styles.buttonRow}>
-          <Button title="計算" onPress={calculateSplit} />
-          <Button title="清除" color="gray" onPress={clearAmount} />
-        </View>
+          <View style={styles.buttonRow}>
+            <Button title="計算" onPress={calculateSplit} />
+            <Button title="清除" color="gray" onPress={clearAmount} />
+          </View>
 
-        <ScrollView style={styles.scrollArea}>
+          {/* 分帳結果 */}
           <Text style={styles.sectionTitle}>分帳結果</Text>
           {results.length === 0 && <Text style={styles.empty}>尚無結果</Text>}
           {results.map(r => (
             <Text key={r.id} style={styles.resultText}>{r.text}</Text>
           ))}
 
+          {/* 歷史紀錄 */}
           <Text style={styles.sectionTitle}>歷史紀錄</Text>
           {history.length === 0 && <Text style={styles.empty}>尚無紀錄</Text>}
           {history.map(item => (
@@ -200,10 +198,9 @@ export default function SplitExpenseScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#fefefe',
     padding: 20,
-    paddingTop: 50,
+    paddingBottom: 50,
+    backgroundColor: '#fefefe',
   },
   title: {
     fontSize: 26,
@@ -241,6 +238,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: '#444',
   },
+  empty: {
+    fontStyle: 'italic',
+    color: '#888',
+  },
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -270,10 +271,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 15,
   },
-  scrollArea: {
-    flexGrow: 1,
-    maxHeight: 300,
-  },
   resultText: {
     fontSize: 16,
     marginBottom: 5,
@@ -295,9 +292,5 @@ const styles = StyleSheet.create({
   deleteIcon: {
     fontSize: 18,
     color: '#d32f2f',
-  },
-  empty: {
-    fontStyle: 'italic',
-    color: '#888',
   },
 });
